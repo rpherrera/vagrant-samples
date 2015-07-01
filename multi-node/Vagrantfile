@@ -1,0 +1,16 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+Vagrant.configure('2') do |config|
+    addresses = [
+        { :name => 'node-01', :ip => '172.16.100.10', :enabled => true },
+        { :name => 'node-02', :ip => '172.16.100.20', :enabled => true },
+        { :name => 'node-03', :ip => '172.16.100.30', :enabled => true },
+    ]
+    addresses.each do | address |
+        config.vm.define address[:name], autostart: address[:enabled] do | node |
+            node.vm.box = 'ubuntu/trusty64'
+            node.vm.network 'private_network', ip: address[:ip]
+        end
+    end
+end
