@@ -3,7 +3,7 @@ WTFPL
 
 ```
             DO WHAT THE FUCK YOU WANT TO PUBLIC LICENSE
-                    Version 2, December 2004
+                    Version 666, July 2016
 
  Copyright (C) 2016 Rafael de Paula Herrera <herrera.rp@gmail.com>
 
