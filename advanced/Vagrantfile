@@ -1,0 +1,70 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+ENV["LC_ALL"] = "en_US.UTF-8"
+
+def configure_machine(config, cpus, memory, ip, netmask, provision_script, hostname, environment)
+  config.vm.box = "bento/ubuntu-16.04"
+  config.vm.boot_timeout = 360
+
+  # You must install the following plugin with:
+  #   vagrant plugin install vagrant-hostmanager
+  # https://github.com/devopsgroup-io/vagrant-hostmanager
+  config.hostmanager.enabled = true
+
+  config.vm.hostname = hostname
+  config.vm.network "public_network", :ip => ip, :netmask => netmask
+
+  config.vm.provider "vmware_fusion"
+  config.vm.provider "virtualbox"
+
+  config.ssh.shell = "bash"
+  config.vm.provision "shell", path: provision_script, preserve_order: true
+
+  cached_addresses = {}
+  config.hostmanager.ip_resolver = proc do |vm, resolving_vm|
+    if cached_addresses[vm.name].nil?
+      if hostname = (vm.ssh_info && vm.ssh_info[:host])
+        vm.communicate.execute("/sbin/ifconfig eth1 | grep 'inet addr' | tail -n 1 | egrep -o '[0-9\.]+' | head -n 1 2>&1") do |type, contents|
+          cached_addresses[vm.name] = contents.split("\n").first[/(\d+\.\d+\.\d+\.\d+)/, 1]
+        end
+      end
+    end
+    cached_addresses[vm.name]
+  end
+  config.vm.provision :hostmanager, preserve_order: true, run: 'always'
+
+  config.vm.provider :vmware_fusion do |vmw|
+    vmw.name = environment
+    vmw.gui = false
+    vmw.functional_hgfs = true
+    vmw.linked_clone = true
+
+    vmw.vmx["memsize"] = memory
+    vmw.vmx["numvcpus"] = cpus
+
+    # https://www.vagrantup.com/docs/vmware/boxes.html#vmx-whitelisting
+    #vmw.vmx["ethernet0.pcislotnumber"] = "32"
+    #vmw.vmx["ethernet1.pcislotnumber"] = "33"
+  end
+
+  config.vm.provider :virtualbox do |vbx|
+    vbx.name = environment
+    vbx.gui = false
+    vbx.linked_clone = true
+
+    vbx.memory = memory
+    vbx.cpus = cpus
+    vbx.customize ["modifyvm", :id, "--ioapic", "on"]
+  end
+end
+
+Vagrant.configure('2') do |config|
+    config.vm.define "server", primary: true do |server|
+      configure_machine(server, 2, 256, "192.168.1.10", "255.255.255.0", "provision.sh", "server.cryonix.com.br", "Server - Development Environment")
+    end
+
+    config.vm.define "client", autostart: false do |client|
+      configure_machine(client, 2, 256, "192.168.1.20", "255.255.255.0","provision.sh", "client.cryonix.com.br", "Client - Development Environment")
+    end
+end
