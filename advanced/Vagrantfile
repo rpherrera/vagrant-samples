@@ -3,7 +3,7 @@
 
 ENV["LC_ALL"] = "en_US.UTF-8"
 
-def configure_machine(config, cpus, memory, ip, netmask, provision_script, hostname, environment)
+def configure_machine(config, cpus, memory, ip, netmask, hostname, provision_script, environment)
   config.vm.box = "bento/ubuntu-16.04"
   config.vm.boot_timeout = 360
 
@@ -61,10 +61,10 @@ end
 
 Vagrant.configure('2') do |config|
     config.vm.define "server", primary: true do |server|
-      configure_machine(server, 2, 256, "192.168.1.10", "255.255.255.0", "provision.sh", "server.cryonix.com.br", "Server - Development Environment")
+      configure_machine(server, 2, 256, "192.168.1.10", "255.255.255.0", "server.cryonix.com.br", "provision.sh", "Server - Development Environment")
     end
 
     config.vm.define "client", autostart: false do |client|
-      configure_machine(client, 2, 256, "192.168.1.20", "255.255.255.0","provision.sh", "client.cryonix.com.br", "Client - Development Environment")
+      configure_machine(client, 2, 256, "192.168.1.20", "255.255.255.0", "client.cryonix.com.br", "provision.sh", "Client - Development Environment")
     end
 end
